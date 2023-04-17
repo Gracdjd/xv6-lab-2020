@@ -443,25 +443,33 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
 
 //function vmprint for debugging
 
-void ptePrint(pagetable_t * p, int level)
+void ptePrint(pagetable_t p, int level)
 {
   // printf("page table %p\n", p);
   for(int i = 0; i < 512; i++){
     pte_t pte = p[i];
     if(pte & PTE_V)
     {
-      for(int t = 0; t <= level; ++t)
-        printf("..");
+      printf("..");
+      for(int t = 0; t < level; ++t)
+        printf(" ..");
       printf("%d: pte %p pa %p\n",i, pte, PTE2PA(pte));
       pte = PTE2PA(pte);
       
       // vmprint(pte); 
-
-      if((pte & (PTE_R|PTE_W|PTE_X)) == 0){
-        level++;
-      // this PTE points to a lower-level page table.
-        ptePrint(pte, level);
+      if(level < 2)
+      {
+        ptePrint((pagetable_t)pte, ++level);
+        --level;
       }
+      
+
+      // if((*((pagetable_t)pte) & PTE_V) && (level < 2)){
+      //   level++;
+      //   ptePrint((pagetable_t)pte, level);
+      //   level--;
+      // }
+
       
     }
     
@@ -470,7 +478,7 @@ void ptePrint(pagetable_t * p, int level)
 
 }
 
-void vmprint(pagetable_t* p)
+void vmprint(pagetable_t p)
 {
   printf("page table %p\n", p);
   ptePrint(p, 0);
