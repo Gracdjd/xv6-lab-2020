@@ -182,7 +182,21 @@ kvmpa(uint64 va)
   pa = PTE2PA(*pte);
   return pa+off;
 }
-
+uint64
+vmpa(uint64 va, pagetable_t pgtbl)
+{
+  uint64 off = va % PGSIZE;
+  pte_t *pte;
+  uint64 pa;
+  
+  pte = walk(pgtbl, va, 0);
+  if(pte == 0)
+    panic("vmpa");
+  if((*pte & PTE_V) == 0)
+    panic("vmpa");
+  pa = PTE2PA(*pte);
+  return pa+off;
+}
 // Create PTEs for virtual addresses starting at va that refer to
 // physical addresses starting at pa. va and size might not
 // be page-aligned. Returns 0 on success, -1 if walk() couldn't

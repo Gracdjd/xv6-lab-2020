@@ -122,7 +122,7 @@ found:
   }
   //new add
   //create kernal pagetable
-  p_kvminit(p->k_pagetable);
+ p->k_pagetable = p_kvminit(p->k_pagetable);
 
   // Allocate a page for the process's kernel stack.
   // Map it high in memory, followed by an invalid

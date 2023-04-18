@@ -161,6 +161,7 @@ int             uartgetc(void);
 void            kvminit(void);
 void            kvminithart(void);
 pagetable_t     p_kvminit(pagetable_t pgble);
+uint64          vmpa(uint64 va, pagetable_t pgtbl);
 uint64          kvmpa(uint64);
 void            kvmmap(uint64, uint64, uint64, int);
 void    vmmap(pagetable_t,uint64, uint64, uint64, int);
