@@ -164,12 +164,14 @@ pagetable_t     p_kvminit(pagetable_t pgble);
 uint64          vmpa(uint64 va, pagetable_t pgtbl);
 uint64          kvmpa(uint64);
 void            kvmmap(uint64, uint64, uint64, int);
-void    vmmap(pagetable_t,uint64, uint64, uint64, int);
+void            vmmap(pagetable_t,uint64, uint64, uint64, int);
 int             mappages(pagetable_t, uint64, uint64, uint64, int);
 pagetable_t     uvmcreate(void);
 void            uvminit(pagetable_t, uchar *, uint);
 uint64          uvmalloc(pagetable_t, uint64, uint64);
 uint64          uvmdealloc(pagetable_t, uint64, uint64);
+void            freewalk(pagetable_t pagetable);
+void            u_freewalk(pagetable_t pagetable);
 #ifdef SOL_COW
 #else
 int             uvmcopy(pagetable_t, pagetable_t, uint64);
