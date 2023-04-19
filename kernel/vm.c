@@ -406,7 +406,36 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
   uvmunmap(new, 0, i / PGSIZE, 1);
   return -1;
 }
+//copy p_pgble to k_pgtbl
+int
+vmcopy(pagetable_t p_pgtbl, pagetable_t k_pgtbl, uint64 sz, uint64 begin)
+{
+  pte_t *pte;
+  uint64 pa;
+  uint flags;
+  char *mem;
+  uint64 i = PGROUNDUP(begin);
+  for(i; i < sz; i += PGSIZE){
+    if((pte = walk(p_pgtbl, i, 0)) == 0)
+      panic("vmcopy: pte should exist");
+    if((*pte & PTE_V) == 0)
+      panic("vmcopy: page not present");
+    pa = PTE2PA(*pte);
+    flags = PTE_FLAGS(*pte) & (~(PTE_U));
+    if((mem = kalloc()) == 0)
+      goto err;
+    memmove(mem, (char*)pa, PGSIZE);
+    if(mappages(k_pgtbl, i, PGSIZE, (uint64)mem, flags) != 0){
+      kfree(mem);
+      goto err;
+    }
+  }
+  return 0;
 
+ err:
+  uvmunmap(k_pgtbl, 0, i / PGSIZE, 1);
+  return -1;
+}
 // mark a PTE invalid for user access.
 // used by exec for the user stack guard page.
 void
