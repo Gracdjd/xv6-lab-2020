@@ -116,6 +116,14 @@ exec(char *path, char **argv)
   p->trapframe->sp = sp; // initial stack pointer
   proc_freepagetable(oldpagetable, oldsz);
 
+  //would kstack wil be clear? no
+  // uvmunmap(p->k_pagetable, p->kstack, 1, 0);
+  uvmunmap(p->k_pagetable, 0, PGROUNDUP(oldsz)/PGSIZE, 0);
+  vmcopy(p->pagetable, p->k_pagetable, p->sz, 0);
+
+
+  // 
+
   //to print the first process's pagetable
   if(p->pid ==1)
   {

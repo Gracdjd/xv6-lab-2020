@@ -100,8 +100,8 @@ allocproc(void)
       goto found;
     } else {
       release(&p->lock);
-    }
   }
+    }
   return 0;
 
 found:
@@ -170,6 +170,7 @@ freeproc(struct proc *p)
     //free kstack
     // pte_t * pa = walk(p->k_pagetable, p->kstack, 0);
     uvmunmap(p->k_pagetable, p->kstack, 1, 1);
+    p->kstack = 0;
     u_freewalk(p->k_pagetable);
   }
     
@@ -252,8 +253,9 @@ userinit(void)
   // allocate one user page and copy init's instructions
   // and data into it.
   uvminit(p->pagetable, initcode, sizeof(initcode));
+  
   p->sz = PGSIZE;
-
+  vmcopy(p->pagetable, p->k_pagetable, p->sz,0);
   // prepare for the very first "return" from kernel to user.
   p->trapframe->epc = 0;      // user program counter
   p->trapframe->sp = PGSIZE;  // user stack pointer
@@ -276,11 +278,24 @@ growproc(int n)
 
   sz = p->sz;
   if(n > 0){
+    if(sz + n > PLIC)
+    {
+      // freeproc(p);
+      return -1;
+    }
     if((sz = uvmalloc(p->pagetable, sz, sz + n)) == 0) {
       return -1;
     }
+    // if(())
+
+    if(vmcopy(p->pagetable, p->k_pagetable, sz - p->sz, p->sz) < 0){
+      // freeproc(p);
+    return -1;
+  }
   } else if(n < 0){
     sz = uvmdealloc(p->pagetable, sz, sz + n);
+    if (PGROUNDUP(sz) < PGROUNDUP(p->sz))
+     uvmunmap(p->k_pagetable, PGROUNDUP(sz),(PGROUNDUP(p->sz) - PGROUNDUP(sz)) / PGSIZE, 0);
   }
   p->sz = sz;
   return 0;
@@ -306,6 +321,13 @@ fork(void)
     release(&np->lock);
     return -1;
   }
+
+  if(vmcopy(np->pagetable, np->k_pagetable, p->sz, 0) < 0){
+    freeproc(np);
+    release(&np->lock);
+    return -1;
+  }
+
   np->sz = p->sz;
 
   np->parent = p;
@@ -513,11 +535,13 @@ scheduler(void)
         // Process is done running for now.
         // It should have changed its p->state before coming back.
         c->proc = 0;
-        kvminithart();
+        
         found = 1;
       }
       release(&p->lock);
     }
+    if(found == 0)
+    kvminithart();
 #if !defined (LAB_FS)
     if(found == 0) {
       intr_on();

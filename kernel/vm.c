@@ -60,8 +60,9 @@ p_kvminit(pagetable_t pgble)
   // virtio mmio disk interface
   vmmap(pgble, VIRTIO0, VIRTIO0, PGSIZE, PTE_R | PTE_W);
 
+  //to avoid remap, it should be kill
   // CLINT
-  vmmap(pgble, CLINT, CLINT, 0x10000, PTE_R | PTE_W);
+  // vmmap(pgble, CLINT, CLINT, 0x10000, PTE_R | PTE_W);
 
   // PLIC
   vmmap(pgble, PLIC, PLIC, 0x400000, PTE_R | PTE_W);
@@ -413,20 +414,20 @@ vmcopy(pagetable_t p_pgtbl, pagetable_t k_pgtbl, uint64 sz, uint64 begin)
   pte_t *pte;
   uint64 pa;
   uint flags;
-  char *mem;
+  // char *mem;
   uint64 i = PGROUNDUP(begin);
-  for(i; i < sz; i += PGSIZE){
+  for(; i < sz + begin; i += PGSIZE){
     if((pte = walk(p_pgtbl, i, 0)) == 0)
       panic("vmcopy: pte should exist");
     if((*pte & PTE_V) == 0)
       panic("vmcopy: page not present");
     pa = PTE2PA(*pte);
-    flags = PTE_FLAGS(*pte) & (~(PTE_U));
-    if((mem = kalloc()) == 0)
-      goto err;
-    memmove(mem, (char*)pa, PGSIZE);
-    if(mappages(k_pgtbl, i, PGSIZE, (uint64)mem, flags) != 0){
-      kfree(mem);
+    flags = PTE_FLAGS(*pte) & (~PTE_U);
+    // if((mem = kalloc()) == 0)
+    //   goto err;
+    // memmove(mem, (char*)pa, PGSIZE);
+    if(mappages(k_pgtbl, i, PGSIZE, pa, flags) != 0){
+      // kfree(mem);
       goto err;
     }
   }
@@ -480,8 +481,7 @@ copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
 int
 copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
 {
-  copyin_new(pagetable, dst, srcva, len);
-  return 0;
+  return copyin_new(pagetable, dst, srcva, len);
 }
 
 // Copy a null-terminated string from user to kernel.
@@ -491,8 +491,8 @@ copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
 int
 copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
 {
-  // copyinstr_new(pagetable, dst, srcva, max);
-  return 0;
+  return copyinstr_new(pagetable, dst, srcva, max);
+
 }
 
 //function vmprint for debugging
