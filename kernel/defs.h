@@ -80,7 +80,7 @@ int             pipewrite(struct pipe*, uint64, int);
 void            printf(char*, ...);
 void            panic(char*) __attribute__((noreturn));
 void            printfinit(void);
-
+void            backtrace();
 // proc.c
 int             cpuid(void);
 void            exit(int);
@@ -139,6 +139,8 @@ int             fetchstr(uint64, char*, int);
 int             fetchaddr(uint64, uint64*);
 void            syscall();
 
+// sysproc.c
+uint64           sys_sleep(void);
 // trap.c
 extern uint     ticks;
 void            trapinit(void);
