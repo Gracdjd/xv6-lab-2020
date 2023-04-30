@@ -99,29 +99,20 @@ sys_uptime(void)
 
 uint64 sys_sigalarm(void)
 {
-  uint64 start = sys_uptime();
   int ticks;
   argint(0, &ticks);
-  void (*handler)();
-  argaddr(1, handler); 
-  struct proc* p = myproc();
+  uint64 handler = 0;
+  argaddr(1, &handler); 
   
+  struct proc* p = myproc();
+
+
   p->ticks = ticks;
-  uint64 end = start + ticks;
-  p->c_ticks = 0;
-  p->hander = handler;
 
-  // uint64 temp = sys_uptime();
-label:
-  do
-  {
-    p->c_ticks = end - sys_uptime();
-  }while(p->c_ticks);
-  handler();
-  end = sys_uptime() + ticks;
+  p->handler = (void(*)())handler;
 
-  goto label;
-
+  return 0;
+  
 
 }
 uint64 sys_sigreturn(void)
