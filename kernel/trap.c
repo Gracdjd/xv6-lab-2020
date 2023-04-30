@@ -82,9 +82,11 @@ usertrap(void)
     if(p->ticks > 0)
     {
       p->c_ticks += 1;
-      if(p->c_ticks >= p->ticks)
+      if(p->c_ticks >= p->ticks && p->alarm_state == 0)
       {
+        *(p->alarmframe)= *(p->trapframe);
         p->trapframe->epc =(uint64) p->handler;
+        p->alarm_state = 1;
         p->c_ticks = 0;
       }
       
