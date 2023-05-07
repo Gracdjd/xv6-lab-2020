@@ -273,6 +273,7 @@ fork(void)
     release(&np->lock);
     return -1;
   }
+  // *p->pagetable = *np->pagetable;
   np->sz = p->sz;
 
   np->parent = p;
